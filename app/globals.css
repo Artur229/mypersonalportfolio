@@ -1,0 +1,228 @@
+@import "tailwindcss";
+
+:root {
+  --background: #050505;
+  --foreground: #f1f0eb;
+  --muted: #858585;
+  --rule: #181818;
+  --accent: #0055ff;
+  --page-gutter: clamp(1.5rem, 6vw, 5rem);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--background);
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body), Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--accent);
+  color: #fff;
+}
+
+.site-shell {
+  min-height: 200svh;
+  background: var(--background);
+}
+
+.hero {
+  position: relative;
+  height: 100svh;
+  min-height: 38rem;
+  overflow: hidden;
+  background: #030303;
+}
+
+.hero-media {
+  position: absolute;
+  inset: -6%;
+  transform-origin: center center;
+  will-change: transform, opacity;
+}
+
+.ambient-canvas,
+.hero-vignette,
+.hero-grain {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.hero-vignette {
+  background:
+    radial-gradient(circle at 50% 48%, transparent 0 18%, rgba(0, 0, 0, 0.24) 58%, #020202 100%),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.25), transparent 35%, rgba(0, 0, 0, 0.35));
+}
+
+.hero-grain {
+  opacity: 0.18;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.18'/%3E%3C/svg%3E");
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+}
+
+.scroll-cue {
+  position: absolute;
+  z-index: 2;
+  right: var(--page-gutter);
+  bottom: clamp(2rem, 5vw, 4rem);
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  color: #aaa;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  will-change: transform, opacity;
+}
+
+.scroll-line {
+  width: 3.2rem;
+  height: 1px;
+  background: currentColor;
+  transform-origin: right;
+  animation: pulse-line 1.8s ease-in-out infinite;
+}
+
+.statement {
+  position: relative;
+  min-height: 100svh;
+  padding: clamp(5.5rem, 10vw, 9rem) var(--page-gutter);
+  border-top: 1px solid #0d0d0d;
+  background: #070707;
+}
+
+.statement-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: clamp(1rem, 2vw, 2rem);
+  align-items: end;
+  max-width: 100rem;
+  margin: 0 auto;
+}
+
+.statement-title {
+  grid-column: 1 / span 8;
+  margin: 0;
+  font-family: var(--font-display), Arial, sans-serif;
+  font-size: clamp(3.4rem, 7.45vw, 7.2rem);
+  font-weight: 800;
+  line-height: 0.89;
+  letter-spacing: -0.075em;
+}
+
+.line-mask {
+  display: block;
+  overflow: hidden;
+  padding-right: 0.08em;
+  padding-bottom: 0.07em;
+  margin-bottom: -0.07em;
+}
+
+.line-mask > span {
+  display: block;
+  will-change: transform, opacity;
+}
+
+.statement-details {
+  grid-column: 9 / -1;
+  max-width: 27rem;
+  padding-bottom: 0.45rem;
+  will-change: transform, opacity;
+}
+
+.statement-details p {
+  max-width: 25rem;
+  margin: 0 0 2rem;
+  color: #cececa;
+  font-size: clamp(0.95rem, 1.25vw, 1.14rem);
+  line-height: 1.55;
+}
+
+.discipline-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--rule);
+}
+
+.discipline-list li {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.discipline-list li span:last-child {
+  text-align: right;
+}
+
+@keyframes pulse-line {
+  0%,
+  100% {
+    transform: scaleX(0.35);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 760px) {
+  .hero {
+    min-height: 34rem;
+  }
+
+  .scroll-cue {
+    right: auto;
+    left: var(--page-gutter);
+  }
+
+  .statement {
+    min-height: auto;
+    padding-top: 5.5rem;
+    padding-bottom: 6rem;
+  }
+
+  .statement-grid {
+    display: block;
+  }
+
+  .statement-title {
+    font-size: clamp(3rem, 15vw, 4.8rem);
+    line-height: 0.91;
+  }
+
+  .statement-details {
+    max-width: 100%;
+    margin-top: 3.5rem;
+    padding-left: 18%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
