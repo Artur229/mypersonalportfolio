@@ -918,7 +918,7 @@ export default function Home() {
       });
 
       projectMedia.add(
-        "(max-width: 760px), (pointer: coarse) and (max-width: 1024px)",
+        "(max-width: 760px), (pointer: coarse)",
         () => {
           if (experienceMode.current === "light") return;
           const slides = gsap.utils.toArray<HTMLElement>("[data-project-slide]");
@@ -1288,6 +1288,8 @@ export default function Home() {
               <div
                 data-project-image
                 className={`project-image${project.video ? " project-video-background" : ""}`}
+                onContextMenu={(event) => event.preventDefault()}
+                onDragStart={(event) => event.preventDefault()}
               >
                 {project.video ? (
                   <video
@@ -1297,11 +1299,17 @@ export default function Home() {
                     muted
                     loop
                     playsInline
+                    controlsList="nodownload noremoteplayback"
+                    disablePictureInPicture
+                    disableRemotePlayback
+                    draggable={false}
                     preload="none"
                     poster={project.poster}
                     data-project-index={index}
                     data-full-source={project.video}
                     data-balanced-source={project.balancedVideo}
+                    onContextMenu={(event) => event.preventDefault()}
+                    onDragStart={(event) => event.preventDefault()}
                     aria-hidden="true"
                   />
                 ) : (
