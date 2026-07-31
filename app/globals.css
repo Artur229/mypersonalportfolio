@@ -59,7 +59,6 @@ body {
 
 .character {
   display: inline-block;
-  will-change: transform, opacity;
 }
 
 .site-shell {
@@ -98,6 +97,54 @@ body {
   transform: translate(-50%, -18px) scale(0.94);
   transform-origin: 50% 0;
   will-change: transform, opacity;
+}
+
+html[data-experience="balanced"] .floating-nav {
+  backdrop-filter: blur(10px) saturate(108%);
+}
+
+html[data-experience="light"] .floating-nav {
+  background: rgba(8, 8, 8, 0.92);
+  backdrop-filter: none;
+}
+
+html[data-experience="light"] .hero-grain,
+html[data-experience="light"] .contact-footer::before {
+  display: none;
+}
+
+html[data-experience="light"] .character,
+html[data-experience="light"] .hero-copy,
+html[data-experience="light"] .projects-stage,
+html[data-experience="light"] .project-content {
+  will-change: auto;
+}
+
+html[data-experience="light"] .project-image {
+  box-shadow: none;
+}
+
+html[data-experience="light"] .projects-showcase {
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+  background: #090909 !important;
+}
+
+html[data-experience="light"] .projects-stage,
+html[data-experience="light"] .project-slide {
+  position: relative;
+  inset: auto;
+}
+
+html[data-experience="light"] .project-slide {
+  min-height: 100svh;
+  opacity: 1;
+  visibility: visible;
+}
+
+html[data-experience="light"] .contact-footer {
+  margin-top: 0;
 }
 
 .floating-nav-bar {
@@ -1432,6 +1479,56 @@ body {
 
   .project-description {
     font-size: 0.76rem;
+  }
+}
+
+@media (pointer: coarse) and (min-width: 761px) and (max-width: 1024px) {
+  .projects-showcase {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    background: #090909 !important;
+  }
+
+  .projects-stage,
+  .project-slide {
+    position: relative;
+    inset: auto;
+  }
+
+  .project-slide {
+    min-height: 100svh;
+    padding: 7rem var(--layout-gutter) 2.5rem;
+    opacity: 1;
+    visibility: visible;
+    background: #030303;
+  }
+
+  .project-content {
+    width: min(34rem, 62vw);
+    height: auto;
+    padding-top: 0;
+  }
+
+  .project-content h2 {
+    font-size: clamp(4rem, 9vw, 5.8rem);
+  }
+
+  .project-description {
+    margin-top: 2rem;
+  }
+
+  .project-image,
+  .project-video-background {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+  }
+
+  .contact-footer {
+    margin-top: -35svh;
   }
 }
 

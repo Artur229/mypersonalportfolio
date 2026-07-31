@@ -6,9 +6,20 @@ import {
   useRef,
   useState,
 } from "react";
+import Image from "next/image";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
+
+type ExperienceMode = "full" | "balanced" | "light";
+
+type PerformanceNavigator = Navigator & {
+  connection?: {
+    effectiveType?: string;
+    saveData?: boolean;
+  };
+  deviceMemory?: number;
+};
 
 const CONTACT_COOLDOWN_KEY = "portfolio-contact-submitted-at";
 const CONTACT_COOLDOWN_MS = 24 * 60 * 60 * 1000;
@@ -29,6 +40,7 @@ const projects = [
       "A full-stack food delivery website built around a clear catalog, ordering flow and responsive experience.",
     image: "/projects/luxury-eats.jpg",
     video: "/media/hero-showcase.mp4",
+    balancedVideo: "/media/luxury-eats-balanced.mp4",
     poster: "/media/hero-showcase-poster.webp",
     color: "#030303",
   },
@@ -40,6 +52,7 @@ const projects = [
       "An AI-integrated study planner that helps learners organize goals, build schedules and track progress.",
     image: "/projects/ai-study-planner.jpg",
     video: "/media/ai-study-planner-showcase.mp4",
+    balancedVideo: "/media/ai-study-planner-balanced.mp4",
     poster: "/media/ai-study-planner-showcase-poster.webp",
     color: "#030303",
   },
@@ -51,10 +64,52 @@ const projects = [
       "A CMS-powered online shop with flexible catalog management, content updates and a clean shopping experience.",
     image: "/projects/jojo-shop.jpg",
     video: "/media/jojo-shop-showcase.mp4",
+    balancedVideo: "/media/jojo-shop-balanced.mp4",
     poster: "/media/jojo-shop-showcase-poster.webp",
     color: "#030303",
   },
 ];
+
+function detectExperienceMode(): ExperienceMode {
+  const performanceNavigator = navigator as PerformanceNavigator;
+  const reducedMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)",
+  ).matches;
+  const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
+  const connection = performanceNavigator.connection;
+  const slowConnection = ["slow-2g", "2g"].includes(
+    connection?.effectiveType ?? "",
+  );
+
+  if (reducedMotion || connection?.saveData || slowConnection) return "light";
+
+  const lowMemory =
+    typeof performanceNavigator.deviceMemory === "number" &&
+    performanceNavigator.deviceMemory <= 4;
+  const lowCoreCount =
+    typeof navigator.hardwareConcurrency === "number" &&
+    navigator.hardwareConcurrency <= 4;
+  const limitedConnection = connection?.effectiveType === "3g";
+  const compactViewport = window.innerWidth <= 1024;
+
+  if (
+    (coarsePointer || compactViewport) &&
+    ((lowMemory && lowCoreCount) ||
+      (limitedConnection && (lowMemory || lowCoreCount)))
+  ) {
+    return "light";
+  }
+  if (
+    coarsePointer ||
+    compactViewport ||
+    lowMemory ||
+    lowCoreCount ||
+    limitedConnection
+  ) {
+    return "balanced";
+  }
+  return "full";
+}
 
 function CharacterText({
   text,
@@ -103,6 +158,7 @@ export default function Home() {
   const root = useRef<HTMLElement>(null);
   const lenisRef = useRef<Lenis | null>(null);
   const projectVideos = useRef<Array<HTMLVideoElement | null>>([]);
+  const experienceMode = useRef<ExperienceMode>("balanced");
   const navigation = useRef<HTMLElement>(null);
   const navigationToggle = useRef<HTMLButtonElement>(null);
   const contactDrawer = useRef<HTMLElement>(null);
@@ -266,26 +322,52 @@ export default function Home() {
       "(prefers-reduced-motion: reduce)",
     ).matches;
     const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
+    const applyExperienceMode = (mode: ExperienceMode) => {
+      experienceMode.current = mode;
+      document.documentElement.dataset.experience = mode;
+      root.current?.setAttribute("data-experience", mode);
+
+      if (mode !== "light") return;
+      projectVideos.current.forEach((video) => {
+        if (!video) return;
+        video.pause();
+        video.removeAttribute("src");
+        delete video.dataset.loadedSource;
+        video.load();
+      });
+    };
+    applyExperienceMode(detectExperienceMode());
+
+    const ensureVideoSource = (video: HTMLVideoElement, index: number) => {
+      const mode = experienceMode.current;
+      if (mode === "light" || video.dataset.failed === "true") return false;
+
+      const source =
+        mode === "full" ? projects[index].video : projects[index].balancedVideo;
+      if (video.dataset.loadedSource !== source) {
+        video.src = source;
+        video.dataset.loadedSource = source;
+        video.load();
+      }
+      return true;
+    };
+
     let lenis: Lenis | undefined;
     let updateLenis: ((time: number) => void) | undefined;
     let projectMedia: ReturnType<typeof gsap.matchMedia> | undefined;
 
-    if (!prefersReducedMotion) {
+    if (!prefersReducedMotion && experienceMode.current === "full" && !isTouchDevice) {
       lenis = new Lenis({
-        duration: isTouchDevice ? 1.25 : 1.75,
+        duration: 1.75,
         easing: (time) => 1 - Math.pow(1 - time, 6),
         smoothWheel: true,
-        syncTouch: isTouchDevice,
-        syncTouchLerp: 0.09,
-        touchInertiaExponent: 1.65,
+        syncTouch: false,
         wheelMultiplier: 0.68,
-        touchMultiplier: 0.95,
       });
       lenisRef.current = lenis;
       lenis.on("scroll", ScrollTrigger.update);
       updateLenis = (time: number) => lenis?.raf(time * 1000);
       gsap.ticker.add(updateLenis);
-      gsap.ticker.lagSmoothing(0);
     }
 
     const scope = gsap.context(() => {
@@ -551,7 +633,8 @@ export default function Home() {
         );
 
       projectMedia = gsap.matchMedia();
-      projectMedia.add("(min-width: 761px)", () => {
+      projectMedia.add("(min-width: 761px) and (pointer: fine)", () => {
+        if (experienceMode.current === "light") return;
         const slides = gsap.utils.toArray<HTMLElement>("[data-project-slide]");
         let projectMagnetPoints: number[] = [];
         let lastProjectMagnet = -1;
@@ -574,6 +657,7 @@ export default function Home() {
 
           const video = projectVideos.current[nextVideo];
           if (!video) return;
+          if (!ensureVideoSource(video, nextVideo)) return;
           video.currentTime = 0;
           void video.play().catch(() => {
             if (activeProjectVideo === nextVideo) activeProjectVideo = null;
@@ -800,13 +884,16 @@ export default function Home() {
         return () => syncProjectVideo(null);
       });
 
-      projectMedia.add("(max-width: 760px)", () => {
-        const slides = gsap.utils.toArray<HTMLElement>("[data-project-slide]");
-        const videos = projectVideos.current.filter(
-          (video): video is HTMLVideoElement => Boolean(video),
-        );
+      projectMedia.add(
+        "(max-width: 760px), (pointer: coarse) and (max-width: 1024px)",
+        () => {
+          if (experienceMode.current === "light") return;
+          const slides = gsap.utils.toArray<HTMLElement>("[data-project-slide]");
+          const videos = projectVideos.current.filter(
+            (video): video is HTMLVideoElement => Boolean(video),
+          );
 
-        const revealTimelines = slides.map((slide) => {
+          const revealTimelines = slides.map((slide) => {
           const primaryCharacters = slide.querySelectorAll(
             "[data-project-char]",
           );
@@ -843,40 +930,88 @@ export default function Home() {
               },
               "-=0.1",
             );
-        });
+          });
 
-        const observer = new IntersectionObserver(
+          const preloadObserver = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (!entry.isIntersecting) return;
+              const video = entry.target as HTMLVideoElement;
+              const index = Number(video.dataset.projectIndex);
+              if (Number.isInteger(index)) ensureVideoSource(video, index);
+              preloadObserver.unobserve(video);
+            });
+          },
+          { rootMargin: "70% 0px", threshold: 0 },
+          );
+
+          const playbackObserver = new IntersectionObserver(
           (entries) => {
             entries.forEach((entry) => {
               const video = entry.target as HTMLVideoElement;
               if (entry.isIntersecting && entry.intersectionRatio >= 0.35) {
-                void video.play().catch(() => undefined);
+                const index = Number(video.dataset.projectIndex);
+                if (
+                  Number.isInteger(index) &&
+                  ensureVideoSource(video, index)
+                ) {
+                  void video.play().catch(() => undefined);
+                }
               } else {
                 video.pause();
               }
             });
           },
           { threshold: [0, 0.35] },
-        );
+          );
 
-        videos.forEach((video) => observer.observe(video));
-        return () => {
-          observer.disconnect();
-          videos.forEach((video) => video.pause());
-          revealTimelines.forEach((timeline) => {
-            timeline.scrollTrigger?.kill();
-            timeline.kill();
+          videos.forEach((video) => {
+            preloadObserver.observe(video);
+            playbackObserver.observe(video);
           });
-        };
-      });
+          return () => {
+            preloadObserver.disconnect();
+            playbackObserver.disconnect();
+            videos.forEach((video) => video.pause());
+            revealTimelines.forEach((timeline) => {
+              timeline.scrollTrigger?.kill();
+              timeline.kill();
+            });
+          };
+        },
+      );
     }, root);
 
+    const videoErrorHandlers = projectVideos.current.map((video) => {
+      if (!video) return undefined;
+      const handleError = () => {
+        video.pause();
+        video.removeAttribute("src");
+        video.dataset.failed = "true";
+        delete video.dataset.loadedSource;
+        video.load();
+      };
+      video.addEventListener("error", handleError);
+      return { video, handleError };
+    });
+
+    const pauseVideosWhenHidden = () => {
+      if (document.visibilityState !== "hidden") return;
+      projectVideos.current.forEach((video) => video?.pause());
+    };
+    document.addEventListener("visibilitychange", pauseVideosWhenHidden);
+
     return () => {
+      document.removeEventListener("visibilitychange", pauseVideosWhenHidden);
+      videoErrorHandlers.forEach((entry) => {
+        if (entry) entry.video.removeEventListener("error", entry.handleError);
+      });
       scope.revert();
       projectMedia?.revert();
       if (updateLenis) gsap.ticker.remove(updateLenis);
       lenis?.destroy();
       lenisRef.current = null;
+      delete document.documentElement.dataset.experience;
     };
   }, []);
 
@@ -1111,18 +1246,20 @@ export default function Home() {
                     muted
                     loop
                     playsInline
-                    preload="metadata"
+                    preload="none"
                     poster={project.poster}
+                    data-project-index={index}
+                    data-full-source={project.video}
+                    data-balanced-source={project.balancedVideo}
                     aria-hidden="true"
-                  >
-                    <source src={project.video} type="video/mp4" />
-                  </video>
+                  />
                 ) : (
-                  <img
+                  <Image
                     src={project.image}
                     alt={`${project.title} project interface`}
-                    loading="lazy"
-                    decoding="async"
+                    fill
+                    sizes="(max-width: 760px) 100vw, 60vw"
+                    quality={80}
                   />
                 )}
               </div>
