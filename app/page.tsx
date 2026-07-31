@@ -926,6 +926,23 @@ export default function Home() {
             (video): video is HTMLVideoElement => Boolean(video),
           );
 
+          gsap.set(slides, { autoAlpha: 1 });
+          gsap.set(
+            slides.map((slide) =>
+              slide.querySelector("[data-project-content]"),
+            ),
+            { autoAlpha: 1, y: 0 },
+          );
+          gsap.set(
+            slides.map((slide) => slide.querySelector("[data-project-image]")),
+            {
+              autoAlpha: 1,
+              xPercent: 0,
+              scale: 1,
+              clipPath: "inset(0% 0% 0% 0%)",
+            },
+          );
+
           const revealTimelines = slides.map((slide) => {
           const primaryCharacters = slide.querySelectorAll(
             "[data-project-char]",
