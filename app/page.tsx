@@ -163,12 +163,83 @@ export default function Home() {
   const navigation = useRef<HTMLElement>(null);
   const navigationToggle = useRef<HTMLButtonElement>(null);
   const contactDrawer = useRef<HTMLElement>(null);
+  const cursorSignal = useRef<HTMLDivElement>(null);
   const contactReturnFocus = useRef<HTMLElement | null>(null);
   const [navigationOpen, setNavigationOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
   const [contactStatus, setContactStatus] = useState<
     "idle" | "sending" | "success" | "error" | "limited"
   >("idle");
+
+  useEffect(() => {
+    const signal = cursorSignal.current;
+    const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    );
+    if (!signal || !finePointer.matches || reducedMotion.matches) return;
+
+    const moveX = gsap.quickTo(signal, "x", {
+      duration: 0.34,
+      ease: "power3.out",
+    });
+    const moveY = gsap.quickTo(signal, "y", {
+      duration: 0.34,
+      ease: "power3.out",
+    });
+    let hasPosition = false;
+
+    const handlePointerMove = (event: PointerEvent) => {
+      if (!hasPosition) {
+        gsap.set(signal, {
+          x: event.clientX,
+          y: event.clientY,
+          xPercent: -50,
+          yPercent: -50,
+        });
+        hasPosition = true;
+      } else {
+        moveX(event.clientX);
+        moveY(event.clientY);
+      }
+
+      signal.classList.add("is-visible");
+      const target = event.target as Element | null;
+      signal.classList.toggle(
+        "is-interactive",
+        Boolean(target?.closest("a, button, input, textarea, select, label")),
+      );
+    };
+    const handlePointerDown = () => signal.classList.add("is-pressed");
+    const handlePointerUp = () => signal.classList.remove("is-pressed");
+    const handlePointerOut = (event: PointerEvent) => {
+      if (event.relatedTarget) return;
+      signal.classList.remove("is-visible", "is-interactive", "is-pressed");
+    };
+    const handleWindowBlur = () => {
+      signal.classList.remove("is-visible", "is-interactive", "is-pressed");
+    };
+
+    document.addEventListener("pointermove", handlePointerMove, {
+      passive: true,
+    });
+    document.addEventListener("pointerdown", handlePointerDown, {
+      passive: true,
+    });
+    document.addEventListener("pointerup", handlePointerUp, { passive: true });
+    document.addEventListener("pointerout", handlePointerOut, { passive: true });
+    window.addEventListener("blur", handleWindowBlur);
+
+    return () => {
+      document.removeEventListener("pointermove", handlePointerMove);
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("pointerup", handlePointerUp);
+      document.removeEventListener("pointerout", handlePointerOut);
+      window.removeEventListener("blur", handleWindowBlur);
+      moveX.tween.kill();
+      moveY.tween.kill();
+    };
+  }, []);
 
   useLayoutEffect(() => {
     const previousScrollRestoration = window.history.scrollRestoration;
@@ -1068,6 +1139,9 @@ export default function Home() {
 
   return (
     <main ref={root} className="site-shell">
+      <div ref={cursorSignal} className="cursor-signal" aria-hidden="true">
+        <span />
+      </div>
       <nav
         ref={navigation}
         data-floating-nav

@@ -66,6 +66,98 @@ body {
   background: var(--background);
 }
 
+.cursor-signal {
+  position: fixed;
+  z-index: 200;
+  top: 0;
+  left: 0;
+  display: none;
+  width: 2.35rem;
+  height: 2.35rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms ease;
+  will-change: transform;
+}
+
+.cursor-signal > span {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.52);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 42% 38%, rgba(255, 255, 255, 0.2), transparent 18%),
+    radial-gradient(circle, rgba(0, 85, 255, 0.14), rgba(4, 4, 4, 0.08) 68%);
+  box-shadow:
+    0 0 1.25rem rgba(0, 85, 255, 0.2),
+    inset 0 0 0.75rem rgba(255, 255, 255, 0.07);
+  transform: scale(0.72);
+  transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 180ms ease;
+}
+
+.cursor-signal > span::before,
+.cursor-signal > span::after {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  animation: cursor-interference 620ms steps(4, end) infinite;
+  animation-play-state: paused;
+}
+
+.cursor-signal > span::before {
+  opacity: 0.34;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0 3px,
+    rgba(255, 255, 255, 0.22) 3px 4px
+  );
+}
+
+.cursor-signal > span::after {
+  inset: 43% -20% auto;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 5px rgba(0, 85, 255, 0.7), 0 -4px rgba(255, 255, 255, 0.28);
+}
+
+.cursor-signal.is-visible {
+  opacity: 0.76;
+}
+
+.cursor-signal.is-visible > span::before,
+.cursor-signal.is-visible > span::after {
+  animation-play-state: running;
+}
+
+.cursor-signal.is-interactive > span {
+  border-color: rgba(255, 255, 255, 0.88);
+  transform: scale(1.45);
+}
+
+.cursor-signal.is-pressed > span {
+  transform: scale(0.58);
+}
+
+@keyframes cursor-interference {
+  0% {
+    transform: translate3d(-3%, -5%, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(4%, 3%, 0) rotate(2deg);
+  }
+  100% {
+    transform: translate3d(-2%, 5%, 0) rotate(-1deg);
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .cursor-signal {
+    display: block;
+  }
+}
+
 .floating-nav {
   position: fixed;
   z-index: 20;
