@@ -10,7 +10,6 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
 
-const FORMSPREE_ENDPOINT = "https://formspree.io/f/mojgzynk";
 const CONTACT_COOLDOWN_KEY = "portfolio-contact-submitted-at";
 const CONTACT_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
@@ -233,13 +232,21 @@ export default function Home() {
     setContactStatus("sending");
 
     try {
-      const response = await fetch(FORMSPREE_ENDPOINT, {
+      const formData = new FormData(formElement);
+      const response = await fetch("/api/contact", {
         method: "POST",
-        body: new FormData(formElement),
-        headers: { Accept: "application/json" },
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(Object.fromEntries(formData.entries())),
       });
 
-      if (!response.ok) throw new Error("Formspree rejected the submission");
+      if (response.status === 429) {
+        setContactStatus("limited");
+        return;
+      }
+      if (!response.ok) throw new Error("Contact request was rejected");
 
       formElement.reset();
       try {
@@ -1234,7 +1241,7 @@ export default function Home() {
 
           <form
             className="contact-form"
-            action={FORMSPREE_ENDPOINT}
+            action="/api/contact"
             method="POST"
             onSubmit={submitContact}
           >
@@ -1254,11 +1261,24 @@ export default function Home() {
             </label>
             <label className="contact-field">
               <span>Your name</span>
-              <input name="name" type="text" autoComplete="name" required />
+              <input
+                name="name"
+                type="text"
+                autoComplete="name"
+                minLength={2}
+                maxLength={80}
+                required
+              />
             </label>
             <label className="contact-field">
               <span>Email</span>
-              <input name="email" type="email" autoComplete="email" required />
+              <input
+                name="email"
+                type="email"
+                autoComplete="email"
+                maxLength={254}
+                required
+              />
             </label>
             <label className="contact-field">
               <span>Company / brand</span>
@@ -1266,11 +1286,18 @@ export default function Home() {
                 name="company"
                 type="text"
                 autoComplete="organization"
+                maxLength={100}
               />
             </label>
             <label className="contact-field contact-field-message">
               <span>Tell me about the project</span>
-              <textarea name="message" rows={4} required />
+              <textarea
+                name="message"
+                rows={4}
+                minLength={10}
+                maxLength={3000}
+                required
+              />
             </label>
 
             <div className="contact-form-footer">

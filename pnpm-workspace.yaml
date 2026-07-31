@@ -3,3 +3,6 @@ allowBuilds:
   sharp: set this to true or false
   unrs-resolver: set this to true or false
   workerd: set this to true or false
+overrides:
+  postcss: 8.5.25
+  sharp: 0.35.3
