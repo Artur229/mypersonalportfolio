@@ -355,6 +355,7 @@ export default function Home() {
     let lenis: Lenis | undefined;
     let updateLenis: ((time: number) => void) | undefined;
     let projectMedia: ReturnType<typeof gsap.matchMedia> | undefined;
+    let footerMedia: ReturnType<typeof gsap.matchMedia> | undefined;
 
     if (!prefersReducedMotion && experienceMode.current === "full" && !isTouchDevice) {
       lenis = new Lenis({
@@ -523,44 +524,50 @@ export default function Home() {
         },
       );
 
-      gsap
-        .timeline({
-          scrollTrigger: {
-            trigger: "[data-footer]",
-            start: "top bottom",
-            end: "bottom bottom",
-            scrub: 1.5,
-            refreshPriority: -1,
-            invalidateOnRefresh: true,
-          },
-        })
-        .fromTo(
-          "[data-footer]",
-          {
-            y: () => {
-              const footer = document.querySelector<HTMLElement>("[data-footer]");
-              return footer
-                ? Math.abs(Number.parseFloat(getComputedStyle(footer).marginTop))
-                : 0;
+      footerMedia = gsap.matchMedia();
+      footerMedia.add("(min-width: 761px)", () => {
+        gsap
+          .timeline({
+            scrollTrigger: {
+              trigger: "[data-footer]",
+              start: "top bottom",
+              end: "bottom bottom",
+              scrub: 1.5,
+              refreshPriority: -1,
+              invalidateOnRefresh: true,
             },
-          },
-          {
-            y: 0,
-            duration: 1.25,
-            ease: "none",
-          },
-          0,
-        )
-        .to(
-          "[data-projects] .projects-stage",
-          {
-            yPercent: -4,
-            scale: 1.015,
-            duration: 1.25,
-            ease: "none",
-          },
-          0,
-        );
+          })
+          .fromTo(
+            "[data-footer]",
+            {
+              y: () => {
+                const footer =
+                  document.querySelector<HTMLElement>("[data-footer]");
+                return footer
+                  ? Math.abs(
+                      Number.parseFloat(getComputedStyle(footer).marginTop),
+                    )
+                  : 0;
+              },
+            },
+            {
+              y: 0,
+              duration: 1.25,
+              ease: "none",
+            },
+            0,
+          )
+          .to(
+            "[data-projects] .projects-stage",
+            {
+              yPercent: -4,
+              scale: 1.015,
+              duration: 1.25,
+              ease: "none",
+            },
+            0,
+          );
+      });
 
       gsap
         .timeline({
@@ -1007,6 +1014,7 @@ export default function Home() {
         if (entry) entry.video.removeEventListener("error", entry.handleError);
       });
       scope.revert();
+      footerMedia?.revert();
       projectMedia?.revert();
       if (updateLenis) gsap.ticker.remove(updateLenis);
       lenis?.destroy();

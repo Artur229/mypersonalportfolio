@@ -1413,7 +1413,8 @@ html[data-experience="light"] .contact-footer {
   }
 
   .contact-footer {
-    margin-top: -35svh;
+    margin-top: 0;
+    will-change: auto;
   }
 
   .footer-content {
