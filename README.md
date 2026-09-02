@@ -2,7 +2,6 @@
 
 A personal portfolio website for a developer — a single-page site with animations, project showcases, and a contact form.
 
-🔗 **Demo:** _add link to the deployed site_
 
 ## Tech Stack
 
